@@ -18,7 +18,7 @@ export const Presentation: React.FC = () => {
   return (
     <div className="w-full max-w-2xl">
       <Card
-        data-testId="presentation"
+        data-testid="presentation"
         className="w-full bg-white border border-gray-200 rounded-2xl p-6 sm:p-8 shadow-sm"
       >
         <CardHeader className="text-center space-y-2">
@@ -30,7 +30,7 @@ export const Presentation: React.FC = () => {
               color: 'var(--footer-text-color, #121212)',
             }}
           >
-            Vincent wBTC DCA Agent
+            Vincent Aerodrome DCA Agent
           </CardTitle>
           <CardDescription
             className="uppercase tracking-widest"

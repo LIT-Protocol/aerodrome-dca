@@ -9,19 +9,19 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 
+import { env } from '@/config/env';
+
+const { VITE_IS_DEVELOPMENT } = env;
+
+const BASE_FREQUENCIES = [
+  { label: 'Daily', value: '1 day' },
+  { label: 'Weekly', value: '1 week' },
+  { label: 'Monthly', value: '1 month' },
+];
+
 export const FREQUENCIES = [
-  {
-    label: 'Daily',
-    value: '1 day',
-  },
-  {
-    label: 'Weekly',
-    value: '1 week',
-  },
-  {
-    label: 'Monthly',
-    value: '1 month',
-  },
+  ...(VITE_IS_DEVELOPMENT ? [{ label: 'Every Minute (Testing)', value: '1 minute' }] : []),
+  ...BASE_FREQUENCIES,
 ];
 
 export interface FrequencySelectProps {

@@ -1,10 +1,12 @@
-import React, { useState, FormEvent } from 'react';
+import React, { useState, useEffect, FormEvent } from 'react';
 
 import { useBackend } from '@/hooks/useBackend';
+import { useTokens } from '@/hooks/useTokens';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { DEFAULT_VALUE, InputAmount } from '@/components/input-amount';
 import { FREQUENCIES, SelectFrequency } from '@/components/select-frequency';
+import { TokenBalanceSelect } from '@/components/token-balance-select';
 
 export interface CreateDCAProps {
   onCreate?: () => void;
@@ -15,26 +17,67 @@ export const CreateDCA: React.FC<CreateDCAProps> = ({ onCreate }) => {
   const [name] = useState<string>('name');
   const [purchaseAmount, setPurchaseAmount] = useState<string>(DEFAULT_VALUE);
   const [frequency, setFrequency] = useState<string>(FREQUENCIES[0].value);
+  const [tokenInAddress, setTokenInAddress] = useState<string>('');
+  const [tokenOutAddress, setTokenOutAddress] = useState<string>('');
   const { createDCA } = useBackend();
+  const { tokens, loading: tokensLoading } = useTokens();
+
+  useEffect(() => {
+    if (tokens.length > 0) {
+      if (!tokenInAddress) {
+        const usdc = tokens.find((t) => t.symbol === 'USDC');
+        if (usdc) setTokenInAddress(usdc.address);
+      }
+      if (!tokenOutAddress) {
+        const weth = tokens.find((t) => t.symbol === 'WETH');
+        if (weth) setTokenOutAddress(weth.address);
+      }
+    }
+  }, [tokens, tokenInAddress, tokenOutAddress]);
 
   const handleCreateDCA = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (!purchaseAmount || Number(purchaseAmount) <= 0) {
-      alert('Please enter a positive DCA amount.');
+    if (!purchaseAmount || Number(purchaseAmount) < 1) {
+      alert('Please enter a DCA amount of at least $1.00 USD.');
       return;
     }
     if (!frequency) {
       alert('Please select a frequency.');
       return;
     }
+    if (!tokenInAddress || !tokenOutAddress) {
+      alert('Please select both tokens.');
+      return;
+    }
+
+    const tokenIn = tokens.find((t) => t.address === tokenInAddress);
+    const tokenOut = tokens.find((t) => t.address === tokenOutAddress);
+
+    if (!tokenIn || !tokenOut) {
+      alert('Invalid token selection.');
+      return;
+    }
 
     try {
       setLoading(true);
-      await createDCA({
+
+      const dcaParams = {
         name,
         purchaseAmount,
         purchaseIntervalHuman: frequency,
-      });
+        tokenIn: {
+          address: tokenIn.address,
+          symbol: tokenIn.symbol,
+          decimals: tokenIn.decimals,
+        },
+        tokenOut: {
+          address: tokenOut.address,
+          symbol: tokenOut.symbol,
+          decimals: tokenOut.decimals,
+        },
+      };
+
+      await createDCA(dcaParams);
       onCreate?.();
     } catch (error) {
       console.error('Error creating DCA:', error);
@@ -65,8 +108,8 @@ export const CreateDCA: React.FC<CreateDCAProps> = ({ onCreate }) => {
                 color: 'var(--footer-text-color, #121212)',
               }}
             >
-              This DCA agent automatically purchases wBTC with a specific amount of USDC on your
-              predefined schedule.
+              This DCA agent automatically purchases your chosen token with a specific amount on
+              your predefined schedule using Aerodrome DEX.
             </p>
             <p
               className="text-sm leading-relaxed"
@@ -117,7 +160,28 @@ export const CreateDCA: React.FC<CreateDCAProps> = ({ onCreate }) => {
 
         <Separator className="my-8" />
 
-        <div className="my-8">
+        <div className="my-8 space-y-6">
+          {/* Token Selection */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <TokenBalanceSelect
+              label="From Token (Spend)"
+              value={tokenInAddress}
+              onChange={setTokenInAddress}
+              tokens={tokens}
+              disabled={loading || tokensLoading}
+              hideEth={true}
+            />
+            <TokenBalanceSelect
+              label="To Token (Receive)"
+              value={tokenOutAddress}
+              onChange={setTokenOutAddress}
+              tokens={tokens}
+              disabled={loading || tokensLoading}
+              hideEth={true}
+            />
+          </div>
+
+          {/* Amount and Frequency */}
           <div className="flex flex-col sm:flex-row gap-4 items-stretch sm:items-end">
             <div className="flex-1 min-w-0">
               <InputAmount
@@ -141,7 +205,7 @@ export const CreateDCA: React.FC<CreateDCAProps> = ({ onCreate }) => {
               type="submit"
               variant="primary"
               size="md"
-              disabled={loading}
+              disabled={loading || tokensLoading}
               className="sm:flex-shrink-0 whitespace-nowrap"
             >
               Create DCA →

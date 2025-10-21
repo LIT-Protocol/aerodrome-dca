@@ -4,6 +4,7 @@ import consola from 'consola';
 import { ethers } from 'ethers';
 
 import { IRelayPKP } from '@lit-protocol/types';
+import { AbilityAction } from '@lit-protocol/vincent-ability-aerodrome-swap';
 
 import { type AppData, assertPermittedVersion } from '../jobVersion';
 import {
@@ -15,14 +16,11 @@ import {
   getUserPermittedVersion,
   handleOperationExecution,
 } from './utils';
-import {
-  getErc20ApprovalToolClient,
-  getSignedUniswapQuote,
-  getUniswapToolClient,
-} from './vincentAbilities';
+import { getAerodromeAbilityClient } from './vincentAbilities';
 import { env } from '../../../env';
 import { normalizeError } from '../../../error';
 import { PurchasedCoin } from '../../../mongo/models/PurchasedCoin';
+import { getTokenByAddress } from '../../../tokens/tokenService';
 
 export type JobType = Job<JobParams>;
 export type JobParams = {
@@ -31,108 +29,115 @@ export type JobParams = {
   pkpInfo: IRelayPKP;
   purchaseAmount: number;
   purchaseIntervalHuman: string;
+  tokenIn: {
+    address: `0x${string}`;
+    decimals: number;
+    symbol: string;
+  };
+  tokenOut: {
+    address: `0x${string}`;
+    decimals: number;
+    symbol: string;
+  };
   updatedAt: Date;
 };
 
 const { BASE_RPC_URL, VINCENT_APP_ID } = env;
 
-const BASE_CHAIN_ID = 8453;
-const BASE_USDC_ADDRESS = '0x833589fcd6edb6e08f4c7c32d4f71b54bda02913';
-const BASE_WBTC_ADDRESS = '0x0555E30da8f98308EdB960aa94C0Db47230d2B9c';
-const BASE_UNISWAP_V3_ROUTER = '0x2626664c2603336E57B271c5C0b26F421741e481';
-
 const baseProvider = new ethers.providers.StaticJsonRpcProvider(BASE_RPC_URL);
-const usdcContract = getERC20Contract(BASE_USDC_ADDRESS, baseProvider);
-
-async function addUsdcApproval({
-  ethAddress,
-  usdcAmount,
-}: {
-  ethAddress: `0x${string}`;
-  usdcAmount: ethers.BigNumber;
-}): Promise<`0x${string}` | undefined> {
-  const erc20ApprovalToolClient = getErc20ApprovalToolClient();
-  const approvalParams = {
-    alchemyGasSponsor,
-    alchemyGasSponsorApiKey,
-    alchemyGasSponsorPolicyId,
-    chainId: BASE_CHAIN_ID,
-    rpcUrl: BASE_RPC_URL,
-    spenderAddress: BASE_UNISWAP_V3_ROUTER,
-    tokenAddress: BASE_USDC_ADDRESS,
-    tokenAmount: usdcAmount.mul(5).toString(), // Approve 5x the amount to spend so we don't wait for approval tx's every time we run
-  };
-  const approvalContext = {
-    delegatorPkpEthAddress: ethAddress,
-  };
-
-  // Running precheck to prevent sending approval tx if not needed or will fail
-  const approvalPrecheckResult = await erc20ApprovalToolClient.precheck(
-    approvalParams,
-    approvalContext
-  );
-  if (!approvalPrecheckResult.success) {
-    throw new Error(`ERC20 approval tool precheck failed: ${approvalPrecheckResult}`);
-  } else if (approvalPrecheckResult.result.alreadyApproved) {
-    // No need to send tx, allowance is already at that amount
-    return undefined;
-  }
-
-  // Sending approval tx
-  const approvalExecutionResult = await erc20ApprovalToolClient.execute(
-    approvalParams,
-    approvalContext
-  );
-  consola.trace('ERC20 Approval Vincent Tool Response:', approvalExecutionResult);
-  if (!approvalExecutionResult.success) {
-    throw new Error(`ERC20 approval tool execution failed: ${approvalExecutionResult}`);
-  }
-
-  return approvalExecutionResult.result.approvalTxHash as `0x${string}`;
-}
 
 async function handleSwapExecution({
   delegatorAddress,
+  pkpPublicKey,
   tokenInAddress,
   tokenInAmount,
-  tokenInDecimals,
   tokenOutAddress,
 }: {
   delegatorAddress: `0x${string}`;
+  pkpPublicKey: `0x${string}`;
   tokenInAddress: `0x${string}`;
   tokenInAmount: ethers.BigNumber;
   tokenInDecimals: number;
   tokenOutAddress: `0x${string}`;
 }): Promise<`0x${string}`> {
-  const signedUniswapQuote = await getSignedUniswapQuote({
-    tokenInAddress,
-    tokenOutAddress,
-    recipient: delegatorAddress,
-    rpcUrl: BASE_RPC_URL,
-    tokenInAmount: ethers.utils.formatUnits(tokenInAmount, tokenInDecimals),
-  });
-
-  const uniswapToolClient = getUniswapToolClient();
-  const swapParams = {
-    signedUniswapQuote,
-    rpcUrlForUniswap: BASE_RPC_URL,
-  };
+  const aerodromeSwapAbilityClient = getAerodromeAbilityClient();
   const swapContext = {
     delegatorPkpEthAddress: delegatorAddress,
   };
 
-  const swapPrecheckResult = await uniswapToolClient.precheck(swapParams, swapContext);
+  const approveParams = {
+    alchemyGasSponsor,
+    alchemyGasSponsorApiKey,
+    alchemyGasSponsorPolicyId,
+    tokenInAddress,
+    tokenOutAddress,
+    action: AbilityAction.Approve,
+    amountIn: tokenInAmount.toString(),
+    rpcUrl: BASE_RPC_URL,
+  };
+
+  const approvePrecheckResult = await aerodromeSwapAbilityClient.precheck(
+    approveParams,
+    swapContext
+  );
+  consola.trace('Aerodrome Approve Precheck Response:', approvePrecheckResult);
+  if (!approvePrecheckResult.success) {
+    throw new Error(`Aerodrome approve precheck failed: ${approvePrecheckResult.result?.reason}`);
+  }
+
+  const approveExecutionResult = await aerodromeSwapAbilityClient.execute(
+    approveParams,
+    swapContext
+  );
+  consola.trace('Aerodrome Approve Vincent Tool Response:', approveExecutionResult);
+  if (approveExecutionResult.success === false) {
+    throw new Error(`Aerodrome tool approval failed: ${approveExecutionResult.runtimeError}`);
+  }
+
+  const approveResult = approveExecutionResult.result!;
+  const approveOperationHash = (approveResult.approvalTxUserOperationHash ||
+    approveResult.approvalTxHash) as `0x${string}` | undefined;
+
+  if (approveOperationHash) {
+    consola.debug('Waiting for approval transaction to be mined...');
+    await handleOperationExecution({
+      pkpPublicKey,
+      isSponsored: alchemyGasSponsor,
+      operationHash: approveOperationHash,
+      provider: baseProvider,
+    });
+    consola.debug('Approval transaction mined successfully');
+  } else {
+    consola.debug('Approval already sufficient, no transaction needed');
+  }
+
+  const swapParams = {
+    alchemyGasSponsor,
+    alchemyGasSponsorApiKey,
+    alchemyGasSponsorPolicyId,
+    tokenInAddress,
+    tokenOutAddress,
+    action: AbilityAction.Swap,
+    amountIn: tokenInAmount.toString(),
+    rpcUrl: BASE_RPC_URL,
+  };
+
+  const swapPrecheckResult = await aerodromeSwapAbilityClient.precheck(swapParams, swapContext);
+  consola.trace('Aerodrome Swap Precheck Response:', swapPrecheckResult);
   if (!swapPrecheckResult.success) {
-    throw new Error(`Uniswap tool precheck failed: ${swapPrecheckResult}`);
+    throw new Error(`Aerodrome swap precheck failed: ${swapPrecheckResult.result?.reason}`);
   }
 
-  const swapExecutionResult = await uniswapToolClient.execute(swapParams, swapContext);
-  consola.trace('Uniswap Swap Vincent Tool Response:', swapExecutionResult);
-  if (!swapExecutionResult.success) {
-    throw new Error(`Uniswap tool execution failed: ${swapExecutionResult}`);
+  const swapExecutionResult = await aerodromeSwapAbilityClient.execute(swapParams, swapContext);
+  consola.trace('Aerodrome Swap Vincent Tool Response:', swapExecutionResult);
+  if (swapExecutionResult.success === false) {
+    throw new Error(`Aerodrome tool execution failed: ${swapExecutionResult.runtimeError}`);
   }
 
-  return swapExecutionResult.result.swapTxHash as `0x${string}`;
+  const result = swapExecutionResult.result!;
+  const operationHash = (result.swapTxUserOperationHash || result.swapTxHash) as `0x${string}`;
+
+  return operationHash;
 }
 
 export async function executeDCASwap(job: JobType, sentryScope: Sentry.Scope): Promise<void> {
@@ -143,6 +148,8 @@ export async function executeDCASwap(job: JobType, sentryScope: Sentry.Scope): P
         app,
         pkpInfo: { ethAddress, publicKey },
         purchaseAmount,
+        tokenIn,
+        tokenOut,
       },
     } = job.attrs;
 
@@ -150,25 +157,63 @@ export async function executeDCASwap(job: JobType, sentryScope: Sentry.Scope): P
       _id,
       ethAddress,
       purchaseAmount,
+      tokenIn: tokenIn.symbol,
+      tokenOut: tokenOut.symbol,
     });
 
-    consola.debug('Fetching user USDC balance...');
-    const [usdcBalance, userPermittedAppVersion] = await Promise.all([
-      balanceOf(usdcContract, ethAddress),
+    consola.debug(`Fetching user ${tokenIn.symbol} balance...`);
+    const tokenInContract = getERC20Contract(tokenIn.address, baseProvider);
+    const [tokenInBalance, userPermittedAppVersion, tokenInInfo] = await Promise.all([
+      balanceOf(tokenInContract, ethAddress),
       getUserPermittedVersion({ ethAddress, appId: VINCENT_APP_ID }),
+      getTokenByAddress(tokenIn.address),
     ]);
 
     sentryScope.addBreadcrumb({
       data: {
-        usdcBalance,
+        tokenInBalance: ethers.utils.formatUnits(tokenInBalance, tokenIn.decimals),
+        tokenInSymbol: tokenIn.symbol,
       },
-      message: 'User USDC balance',
+      message: `User ${tokenIn.symbol} balance`,
     });
 
-    const _purchaseAmount = ethers.utils.parseUnits(purchaseAmount.toFixed(6), 6);
-    if (usdcBalance.lt(_purchaseAmount)) {
+    // Convert USD purchase amount to token amount using token price
+    let _purchaseAmount: ethers.BigNumber;
+    if (tokenInInfo?.price) {
+      const tokenPrice = parseFloat(tokenInInfo.price);
+
+      // Use BigNumber math to avoid precision issues
+      // Formula: tokenAmount = purchaseAmount / tokenPrice
+      // Implementation: (purchaseAmount * 10^decimals) / (tokenPrice * 10^6) * 10^6 / 10^decimals
+      // Simplified: (purchaseAmount * 10^(decimals+6)) / (tokenPrice * 10^6)
+
+      const purchaseAmountScaled = ethers.utils.parseUnits(purchaseAmount.toString(), 6); // Scale USD to 6 decimals
+      const tokenPriceScaled = ethers.utils.parseUnits(tokenPrice.toFixed(6), 6); // Scale price to 6 decimals
+
+      // Calculate: (purchaseAmount / tokenPrice) * 10^decimals
+      _purchaseAmount = purchaseAmountScaled
+        .mul(ethers.BigNumber.from(10).pow(tokenIn.decimals))
+        .div(tokenPriceScaled);
+
+      consola.debug(
+        `Converting $${purchaseAmount} USD to ${ethers.utils.formatUnits(_purchaseAmount, tokenIn.decimals)} ${tokenIn.symbol} at price $${tokenPrice}`
+      );
+    } else {
+      // Fallback: treat purchaseAmount as token amount if price unavailable
+      consola.warn(
+        `Token price not available for ${tokenIn.symbol}, treating purchaseAmount as token amount`
+      );
+      _purchaseAmount = ethers.utils.parseUnits(
+        purchaseAmount.toFixed(tokenIn.decimals),
+        tokenIn.decimals
+      );
+    }
+
+    if (tokenInBalance.lt(_purchaseAmount)) {
+      const balanceFormatted = ethers.utils.formatUnits(tokenInBalance, tokenIn.decimals);
+      const requiredFormatted = ethers.utils.formatUnits(_purchaseAmount, tokenIn.decimals);
       throw new Error(
-        `Not enough balance for account ${ethAddress} - please fund this account with USDC to DCA`
+        `Not enough balance for account ${ethAddress} - has ${balanceFormatted} ${tokenIn.symbol}, needs ${requiredFormatted} ${tokenIn.symbol} (=$${purchaseAmount} USD) to DCA`
       );
     }
     if (!userPermittedAppVersion) {
@@ -197,35 +242,27 @@ export async function executeDCASwap(job: JobType, sentryScope: Sentry.Scope): P
       ethAddress,
       purchaseAmount,
       userPermittedAppVersion,
-      usdcBalance: ethers.utils.formatUnits(usdcBalance, 6),
+      tokenIn: tokenIn.symbol,
+      tokenInBalance: ethers.utils.formatUnits(tokenInBalance, tokenIn.decimals),
+      tokenOut: tokenOut.symbol,
     });
 
-    const approvalHash = await addUsdcApproval({
-      ethAddress: ethAddress as `0x${string}`,
-      usdcAmount: _purchaseAmount,
-    });
-    sentryScope.addBreadcrumb({
-      data: {
-        approvalHash,
-      },
-    });
-
-    if (approvalHash) {
-      await handleOperationExecution({
-        isSponsored: alchemyGasSponsor,
-        operationHash: approvalHash,
-        pkpPublicKey: publicKey,
-        provider: baseProvider,
-      });
-    }
-
-    const swapHash = await handleSwapExecution({
+    const swapOperationHash = await handleSwapExecution({
       delegatorAddress: ethAddress as `0x${string}`,
-      tokenInAddress: BASE_USDC_ADDRESS,
+      pkpPublicKey: publicKey as `0x${string}`,
+      tokenInAddress: tokenIn.address,
       tokenInAmount: _purchaseAmount,
-      tokenInDecimals: 6,
-      tokenOutAddress: BASE_WBTC_ADDRESS,
+      tokenInDecimals: tokenIn.decimals,
+      tokenOutAddress: tokenOut.address,
     });
+
+    const { txHash: swapHash } = await handleOperationExecution({
+      isSponsored: alchemyGasSponsor,
+      operationHash: swapOperationHash,
+      pkpPublicKey: publicKey,
+      provider: baseProvider,
+    });
+
     sentryScope.addBreadcrumb({
       data: {
         swapHash,
@@ -235,16 +272,18 @@ export async function executeDCASwap(job: JobType, sentryScope: Sentry.Scope): P
     // Create a purchase record with all required fields
     const purchase = new PurchasedCoin({
       ethAddress,
-      coinAddress: BASE_WBTC_ADDRESS,
-      name: 'wBTC',
+      coinAddress: tokenOut.address,
+      name: tokenOut.symbol,
       purchaseAmount: purchaseAmount.toFixed(2),
       scheduleId: _id,
-      symbol: 'wBTC',
+      symbol: tokenOut.symbol,
       txHash: swapHash,
     });
     await purchase.save();
 
-    consola.debug(`Successfully purchased ${purchaseAmount} USDC of wBTC at tx hash ${swapHash}`);
+    consola.debug(
+      `Successfully purchased ${purchaseAmount} ${tokenIn.symbol} of ${tokenOut.symbol} at tx hash ${swapHash}`
+    );
   } catch (e) {
     // Catch-and-rethrow is usually an antipattern, but Agenda doesn't log failed job reasons to console
     // so this is our chance to log the job failure details using Consola before we throw the error

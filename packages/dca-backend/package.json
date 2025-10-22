@@ -50,8 +50,6 @@
     "@lit-protocol/lit-node-client": "^7.3.0",
     "@lit-protocol/types": "^7.3.0",
     "@lit-protocol/vincent-ability-aerodrome-swap": "0.2.0-alpha4",
-    "@wagmi/core": "^2.0.0",
-    "viem": "^2.0.0",
     "@lit-protocol/vincent-ability-erc20-approval": "3.1.0",
     "@lit-protocol/vincent-app-sdk": "2.2.1",
     "@lit-protocol/vincent-contracts-sdk": "^1.0.1",
@@ -60,6 +58,7 @@
     "@sentry/cli": "^2.52.0",
     "@sentry/node": "^10.5.0",
     "@t3-oss/env-core": "^0.12.0",
+    "@wagmi/core": "^2.0.0",
     "@whisthub/agenda": "^7.0.2",
     "consola": "^3.4.2",
     "cors": "^2.8.5",
@@ -70,7 +69,8 @@
     "mongoose": "^8.10.1",
     "node-cache": "^5.1.2",
     "semver": "^7.7.2",
-    "tslib": "^2.8.1"
+    "tslib": "^2.8.1",
+    "viem": "^2.0.0"
   },
   "devDependencies": {
     "@jest/globals": "^29.7.0",

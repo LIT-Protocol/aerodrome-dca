@@ -37,7 +37,6 @@ export const InputAmount: React.FC<FrequencySelectProps> = ({
           className="h-10"
           type="number"
           step="0.01"
-          min="1"
           placeholder="1.00"
           value={value}
           onChange={(e) => onChange?.(e.target.value)}

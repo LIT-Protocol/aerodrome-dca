@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useRef } from 'react';
+import { create } from 'zustand';
 import { useBackend } from './useBackend';
 
 export interface Token {
@@ -9,29 +10,47 @@ export interface Token {
   price?: string;
 }
 
+interface TokenStore {
+  tokens: Token[];
+  loading: boolean;
+  error: Error | null;
+  fetchTokens: (getTokensFn: () => Promise<Token[]>) => Promise<void>;
+}
+
+const useTokenStore = create<TokenStore>((set) => ({
+  tokens: [],
+  loading: false,
+  error: null,
+  fetchTokens: async (getTokensFn) => {
+    try {
+      set({ loading: true, error: null });
+      const data = await getTokensFn();
+      set({ tokens: data, loading: false });
+    } catch (err) {
+      console.error('Error fetching tokens:', err);
+      set({
+        error: err instanceof Error ? err : new Error('Unknown error'),
+        loading: false,
+      });
+    }
+  },
+}));
+
 /** Hook to fetch available tokens from the backend */
 export const useTokens = () => {
-  const [tokens, setTokens] = useState<Token[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<Error | null>(null);
+  const { tokens, loading, error, fetchTokens } = useTokenStore();
   const { getTokens } = useBackend();
 
+  const getTokensRef = useRef(getTokens);
   useEffect(() => {
-    const fetchTokens = async () => {
-      try {
-        setLoading(true);
-        const data = await getTokens();
-        setTokens(data);
-      } catch (err) {
-        console.error('Error fetching tokens:', err);
-        setError(err instanceof Error ? err : new Error('Unknown error'));
-      } finally {
-        setLoading(false);
-      }
-    };
+    getTokensRef.current = getTokens;
+  });
 
-    fetchTokens();
-  }, [getTokens]);
+  useEffect(() => {
+    if (tokens.length === 0 && !loading) {
+      fetchTokens(() => getTokensRef.current());
+    }
+  }, [tokens.length, loading, fetchTokens]);
 
-  return { tokens, loading, error };
+  return { tokens, loading, error, refetch: () => fetchTokens(getTokensRef.current) };
 };

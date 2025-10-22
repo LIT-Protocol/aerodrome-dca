@@ -16,8 +16,8 @@ export const ScheduleParamsSchema = z.object({
   }),
   purchaseAmount: z
     .string()
-    .refine((val) => /^\d*\.?\d{1,2}$/.test(val) && parseFloat(val) >= 1, {
-      message: 'Must be at least $1.00 USD with up to 2 decimal places',
+    .refine((val) => /^\d*\.?\d{1,2}$/.test(val) && parseFloat(val) >= 0.01, {
+      message: 'Must be at least $0.01 USD.',
     })
     .transform((val) => parseFloat(val)),
   purchaseIntervalHuman: z.string(),

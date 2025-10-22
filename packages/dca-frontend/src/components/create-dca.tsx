@@ -37,8 +37,8 @@ export const CreateDCA: React.FC<CreateDCAProps> = ({ onCreate }) => {
 
   const handleCreateDCA = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (!purchaseAmount || Number(purchaseAmount) < 1) {
-      alert('Please enter a DCA amount of at least $1.00 USD.');
+    if (!purchaseAmount || Number(purchaseAmount) < 0.01) {
+      alert('Please enter a DCA amount of at least $0.01 USD.');
       return;
     }
     if (!frequency) {
@@ -47,6 +47,10 @@ export const CreateDCA: React.FC<CreateDCAProps> = ({ onCreate }) => {
     }
     if (!tokenInAddress || !tokenOutAddress) {
       alert('Please select both tokens.');
+      return;
+    }
+    if (tokenInAddress === tokenOutAddress) {
+      alert('From Token and To Token must be different.');
       return;
     }
 

@@ -10,6 +10,14 @@ export async function handleListTokensRoute(
 ): Promise<void> {
   const tokens = await getAerodromeTokens();
 
+  if (!tokens || tokens.length === 0) {
+    res.status(404).json({
+      error: 'No tokens available from Aerodrome',
+      success: false,
+    });
+    return;
+  }
+
   res.status(200).json({
     data: tokens,
     success: true,

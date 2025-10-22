@@ -1,4 +1,9 @@
-import { getDefaultConfig, base, type Token, getListedTokens } from 'sugar-sdk';
+import {
+  getDefaultConfig,
+  base,
+  type Token,
+  getListedTokens,
+} from '@lit-protocol/vincent-ability-aerodrome-swap';
 
 import { env } from '../env';
 

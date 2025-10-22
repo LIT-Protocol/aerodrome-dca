@@ -11,6 +11,7 @@
   "type": "module",
   "scripts": {
     "build": "pnpm -r run build",
+    "heroku-postbuild": "pnpm build",
     "lint": "pnpm -r lint",
     "clean": "pnpm exec rm -Rf node_modules dist && pnpm --parallel -r run clean",
     "test": "pnpm -r run test",

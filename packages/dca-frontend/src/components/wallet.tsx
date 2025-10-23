@@ -182,6 +182,7 @@ export const Wallet: React.FC = () => {
           tokens={tokens}
           disabled={tokensLoading}
           hideEth={true}
+          tokensLoading={tokensLoading}
         />
       </div>
 

@@ -15,6 +15,7 @@ export interface TokenBalanceSelectProps {
   tokens: Token[];
   disabled?: boolean;
   hideEth?: boolean;
+  tokensLoading?: boolean;
 }
 
 export const TokenBalanceSelect: React.FC<TokenBalanceSelectProps> = ({
@@ -24,6 +25,7 @@ export const TokenBalanceSelect: React.FC<TokenBalanceSelectProps> = ({
   tokens,
   disabled = false,
   hideEth = false,
+  tokensLoading = false,
 }) => {
   const [balance, setBalance] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
@@ -124,6 +126,7 @@ export const TokenBalanceSelect: React.FC<TokenBalanceSelectProps> = ({
   };
 
   const getDisplayText = () => {
+    if (tokensLoading && !selectedToken) return 'Loading Token Pools and Balance...';
     if (!selectedToken) return 'Select token...';
     if (loading) return `${selectedToken.symbol} (Loading...)`;
     if (balance !== null) {

@@ -124,6 +124,7 @@ export const DialogueEditDCA: React.FC<EditDialogProps> = ({ dca, onUpdate }) =>
                 tokens={tokens}
                 disabled={loading || tokensLoading}
                 hideEth={true}
+                tokensLoading={tokensLoading}
               />
               <TokenBalanceSelect
                 label="To Token (Receive)"
@@ -132,6 +133,7 @@ export const DialogueEditDCA: React.FC<EditDialogProps> = ({ dca, onUpdate }) =>
                 tokens={tokens}
                 disabled={loading || tokensLoading}
                 hideEth={true}
+                tokensLoading={tokensLoading}
               />
             </div>
 

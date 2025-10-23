@@ -174,6 +174,7 @@ export const CreateDCA: React.FC<CreateDCAProps> = ({ onCreate }) => {
               tokens={tokens}
               disabled={loading || tokensLoading}
               hideEth={true}
+              tokensLoading={tokensLoading}
             />
             <TokenBalanceSelect
               label="To Token (Receive)"
@@ -182,6 +183,7 @@ export const CreateDCA: React.FC<CreateDCAProps> = ({ onCreate }) => {
               tokens={tokens}
               disabled={loading || tokensLoading}
               hideEth={true}
+              tokensLoading={tokensLoading}
             />
           </div>
 

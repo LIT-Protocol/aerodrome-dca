@@ -24,8 +24,24 @@ export interface TokenInfo {
   symbol: string; // USD price as string for display
 }
 
-/** Fetches all listed tokens from Aerodrome on Base chain */
-export async function getAerodromeTokens(): Promise<TokenInfo[]> {
+// Cache configuration
+const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes in milliseconds
+
+// In-memory cache
+let cachedTokens: TokenInfo[] | null = null;
+let cacheTimestamp: number | null = null;
+
+/** Helper function to check if cache is still valid */
+function isCacheValid(): boolean {
+  if (!cachedTokens || !cacheTimestamp) {
+    return false;
+  }
+  const now = Date.now();
+  return now - cacheTimestamp < CACHE_TTL_MS;
+}
+
+/** Fetches token data from Aerodrome and updates cache */
+async function fetchAndCacheTokens(): Promise<TokenInfo[]> {
   const tokens = await getListedTokens({ config: sugarConfig });
 
   // Filter for Base chain and listed tokens only
@@ -46,7 +62,25 @@ export async function getAerodromeTokens(): Promise<TokenInfo[]> {
       };
     });
 
+  // Update cache
+  cachedTokens = baseTokens;
+  cacheTimestamp = Date.now();
+
   return baseTokens;
+}
+
+/**
+ * Fetches all listed tokens from Aerodrome on Base chain. Returns cached data if available and less
+ * than 5 minutes old.
+ */
+export async function getAerodromeTokens(): Promise<TokenInfo[]> {
+  // Return cached data if valid
+  if (isCacheValid() && cachedTokens) {
+    return cachedTokens;
+  }
+
+  // Fetch fresh data and update cache
+  return fetchAndCacheTokens();
 }
 
 /** Get token information by address */

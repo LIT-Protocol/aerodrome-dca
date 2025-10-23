@@ -1,13 +1,9 @@
-import { Response } from 'express';
+import { Request, Response } from 'express';
 
-import { VincentAuthenticatedRequest } from './types';
 import { getAerodromeTokens } from '../tokens/tokenService';
 
 /** GET /tokens Returns list of available tokens from Aerodrome */
-export async function handleListTokensRoute(
-  _req: VincentAuthenticatedRequest,
-  res: Response
-): Promise<void> {
+export async function handleListTokensRoute(_req: Request, res: Response): Promise<void> {
   const tokens = await getAerodromeTokens();
 
   if (!tokens || tokens.length === 0) {

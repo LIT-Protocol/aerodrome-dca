@@ -58,7 +58,7 @@ export const registerRoutes = (app: Express) => {
   }
   app.use(cors(corsConfig));
 
-  app.get('/tokens', middleware, setSentryUserMiddleware, handler(handleListTokensRoute));
+  app.get('/tokens', handleListTokensRoute);
   app.get('/purchases', middleware, setSentryUserMiddleware, handler(handleListPurchasesRoute));
   app.get('/schedules', middleware, setSentryUserMiddleware, handler(handleListSchedulesRoute));
   app.post('/schedule', middleware, setSentryUserMiddleware, handler(handleCreateScheduleRoute));

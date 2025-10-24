@@ -59,18 +59,7 @@ export const Presentation: React.FC = () => {
           </p>
 
           <p
-            className="text-sm text-center"
-            style={{
-              fontFamily: '"Encode Sans Semi Expanded", system-ui, sans-serif',
-              color: 'var(--footer-text-color, #121212)',
-            }}
-          >
-            This application allows you to set up automated dollar-cost-averaging for your wBTC
-            investments on Base. Support for more chains coming soon.
-          </p>
-
-          <p
-            className="text-sm text-center"
+            className="text-base text-center"
             style={{
               fontFamily: '"Encode Sans Semi Expanded", system-ui, sans-serif',
               color: 'var(--footer-text-color, #121212)',

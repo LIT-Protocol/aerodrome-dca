@@ -20,6 +20,8 @@ import { Separator } from '@/components/ui/separator';
 import { DCA, useBackend } from '@/hooks/useBackend';
 import { useTokens } from '@/hooks/useTokens';
 
+const { VITE_MIN_PURCHASE_AMOUNT } = env;
+
 export interface EditDialogProps {
   dca: DCA;
   onUpdate?: (updatedDCA: DCA) => void;
@@ -40,8 +42,8 @@ export const DialogueEditDCA: React.FC<EditDialogProps> = ({ dca, onUpdate }) =>
   const handleEditDCA = useCallback(
     async (event: FormEvent<HTMLFormElement>) => {
       event.preventDefault();
-      if (!purchaseAmount || Number(purchaseAmount) < env.VITE_MIN_PURCHASE_AMOUNT) {
-        alert(`Please enter a DCA amount of at least $${env.VITE_MIN_PURCHASE_AMOUNT} USD.`);
+      if (!purchaseAmount || Number(purchaseAmount) < VITE_MIN_PURCHASE_AMOUNT) {
+        alert(`Please enter a DCA amount of at least $${VITE_MIN_PURCHASE_AMOUNT} USD.`);
         return;
       }
       if (!frequency) {

@@ -8,10 +8,12 @@ import { useBackend } from '@/hooks/useBackend';
 import { useTokens } from '@/hooks/useTokens';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { DEFAULT_VALUE, InputAmount } from '@/components/input-amount';
+import { InputAmount } from '@/components/input-amount';
 import { FREQUENCIES, SelectFrequency } from '@/components/select-frequency';
 import { TokenBalanceSelect } from '@/components/token-balance-select';
 import { WalletModal } from '@/components/wallet-modal';
+
+const { VITE_MIN_PURCHASE_AMOUNT } = env;
 
 export interface CreateDCAProps {
   onCreate?: () => void;
@@ -20,7 +22,7 @@ export interface CreateDCAProps {
 export const CreateDCA: React.FC<CreateDCAProps> = ({ onCreate }) => {
   const [loading, setLoading] = useState<boolean>(false);
   const [name] = useState<string>('name');
-  const [purchaseAmount, setPurchaseAmount] = useState<string>(DEFAULT_VALUE);
+  const [purchaseAmount, setPurchaseAmount] = useState<string>(String(VITE_MIN_PURCHASE_AMOUNT));
   const [frequency, setFrequency] = useState<string>(FREQUENCIES[0].value);
   const [tokenInAddress, setTokenInAddress] = useState<string>('');
   const [tokenOutAddress, setTokenOutAddress] = useState<string>('');
@@ -44,8 +46,8 @@ export const CreateDCA: React.FC<CreateDCAProps> = ({ onCreate }) => {
 
   const handleCreateDCA = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (!purchaseAmount || Number(purchaseAmount) < env.VITE_MIN_PURCHASE_AMOUNT) {
-      alert(`Please enter a DCA amount of at least $${env.VITE_MIN_PURCHASE_AMOUNT} USD.`);
+    if (!purchaseAmount || Number(purchaseAmount) < VITE_MIN_PURCHASE_AMOUNT) {
+      alert(`Please enter a DCA amount of at least $${VITE_MIN_PURCHASE_AMOUNT} USD.`);
       return;
     }
     if (!frequency) {
@@ -178,7 +180,7 @@ export const CreateDCA: React.FC<CreateDCAProps> = ({ onCreate }) => {
                 >
                   <div className="flex items-start gap-2">
                     <span className="text-blue-500 font-bold">•</span>
-                    <span>Minimum DCA purchase amount is ${env.VITE_MIN_PURCHASE_AMOUNT} USD.</span>
+                    <span>Minimum DCA purchase amount is ${VITE_MIN_PURCHASE_AMOUNT} USD.</span>
                   </div>
                   <div className="flex items-start gap-2">
                     <span className="text-blue-500 font-bold">•</span>

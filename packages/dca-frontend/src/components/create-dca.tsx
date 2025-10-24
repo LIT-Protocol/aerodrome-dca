@@ -169,12 +169,12 @@ export const CreateDCA: React.FC<CreateDCAProps> = ({ onCreate }) => {
 
           <Button
             type="button"
-            size="lg"
+            size="md"
             variant="primary"
-            className="w-full py-6 text-lg font-semibold"
+            className="w-full py-4 text-base font-semibold"
             onClick={() => setIsModalOpen(true)}
           >
-            <ArrowDownToLine className="flex-shrink-0 h-6 w-6" />{' '}
+            <ArrowDownToLine className="flex-shrink-0 h-5 w-5" />{' '}
             <span className="truncate">Deposit Tokens</span>
           </Button>
         </div>

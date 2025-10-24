@@ -1,8 +1,9 @@
 import React, { useState, useEffect, FormEvent } from 'react';
-import { ArrowDownToLine } from 'lucide-react';
+import { ArrowDownToLine, Info } from 'lucide-react';
 
 import { useJwtContext } from '@lit-protocol/vincent-app-sdk/react';
 
+import { env } from '@/config/env';
 import { useBackend } from '@/hooks/useBackend';
 import { useTokens } from '@/hooks/useTokens';
 import { Button } from '@/components/ui/button';
@@ -43,8 +44,8 @@ export const CreateDCA: React.FC<CreateDCAProps> = ({ onCreate }) => {
 
   const handleCreateDCA = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (!purchaseAmount || Number(purchaseAmount) < 0.01) {
-      alert('Please enter a DCA amount of at least $0.01 USD.');
+    if (!purchaseAmount || Number(purchaseAmount) < env.VITE_MIN_PURCHASE_AMOUNT) {
+      alert(`Please enter a DCA amount of at least $${env.VITE_MIN_PURCHASE_AMOUNT} USD.`);
       return;
     }
     if (!frequency) {
@@ -156,15 +157,36 @@ export const CreateDCA: React.FC<CreateDCAProps> = ({ onCreate }) => {
             </p>
           </div>
 
-          <div
-            className="text-sm p-3 bg-blue-50 border border-blue-200 rounded-lg text-left"
-            style={{
-              fontFamily: '"Encode Sans Semi Expanded", system-ui, sans-serif',
-              color: 'var(--footer-text-color, #121212)',
-            }}
-          >
-            <strong style={{ fontFamily: 'Poppins, system-ui, sans-serif' }}>Note:</strong> Ensure
-            your wallet holds sufficient Base ETH for the app to function smoothly.
+          <div className="relative bg-gradient-to-br from-blue-50 to-indigo-50/60 p-4 rounded-lg border border-blue-200 shadow-sm text-left">
+            <div className="flex gap-3">
+              <div className="flex-shrink-0">
+                <Info className="w-5 h-5 text-blue-500" />
+              </div>
+              <div className="flex-1 space-y-2">
+                <h3
+                  className="text-sm font-semibold text-blue-700"
+                  style={{ fontFamily: 'Poppins, system-ui, sans-serif' }}
+                >
+                  Important Information
+                </h3>
+                <div
+                  className="space-y-1.5 text-sm leading-relaxed"
+                  style={{
+                    fontFamily: '"Encode Sans Semi Expanded", system-ui, sans-serif',
+                    color: 'var(--footer-text-color, #121212)',
+                  }}
+                >
+                  <div className="flex items-start gap-2">
+                    <span className="text-blue-500 font-bold">•</span>
+                    <span>Minimum DCA purchase amount is ${env.VITE_MIN_PURCHASE_AMOUNT} USD.</span>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <span className="text-blue-500 font-bold">•</span>
+                    <span>Transactions are sponsored on Base Mainnet.</span>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
 
           <Button

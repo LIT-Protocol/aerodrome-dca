@@ -1,6 +1,7 @@
 import React, { FormEvent, useCallback, useState } from 'react';
 import { Pencil } from 'lucide-react';
 
+import { env } from '@/config/env';
 import { InputAmount } from '@/components/input-amount';
 import { SelectFrequency } from '@/components/select-frequency';
 import { TokenBalanceSelect } from '@/components/token-balance-select';
@@ -39,8 +40,8 @@ export const DialogueEditDCA: React.FC<EditDialogProps> = ({ dca, onUpdate }) =>
   const handleEditDCA = useCallback(
     async (event: FormEvent<HTMLFormElement>) => {
       event.preventDefault();
-      if (!purchaseAmount || Number(purchaseAmount) < 0.01) {
-        alert('Please enter a DCA amount of at least $0.01 USD.');
+      if (!purchaseAmount || Number(purchaseAmount) < env.VITE_MIN_PURCHASE_AMOUNT) {
+        alert(`Please enter a DCA amount of at least $${env.VITE_MIN_PURCHASE_AMOUNT} USD.`);
         return;
       }
       if (!frequency) {

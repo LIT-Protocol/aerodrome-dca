@@ -26,6 +26,7 @@ export const env = createEnv({
     VITE_BACKEND_URL: z.string(),
     VITE_EXPECTED_AUDIENCE: z.string().default(window.location.origin),
     VITE_IS_DEVELOPMENT: BooleanOrBooleanStringSchema.default(false),
+    VITE_MIN_PURCHASE_AMOUNT: z.coerce.number().default(25),
     VITE_REDIRECT_URI: z.string().default(window.location.origin),
     VITE_SENTRY_DSN: z.string().optional(),
     VITE_SENTRY_FILTER: z.string().optional().default('dca-frontend'),

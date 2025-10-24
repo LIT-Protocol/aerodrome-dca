@@ -1,6 +1,8 @@
 import { Types } from 'mongoose';
 import { z } from 'zod';
 
+import { env } from '../env';
+
 export const ScheduleParamsSchema = z.object({
   app: z.object({
     id: z.number(),
@@ -16,8 +18,8 @@ export const ScheduleParamsSchema = z.object({
   }),
   purchaseAmount: z
     .string()
-    .refine((val) => /^\d*\.?\d{1,2}$/.test(val) && parseFloat(val) >= 0.01, {
-      message: 'Must be at least $0.01 USD.',
+    .refine((val) => /^\d*\.?\d{1,2}$/.test(val) && parseFloat(val) >= env.MIN_PURCHASE_AMOUNT, {
+      message: `Must be at least $${env.MIN_PURCHASE_AMOUNT} USD.`,
     })
     .transform((val) => parseFloat(val)),
   purchaseIntervalHuman: z.string(),

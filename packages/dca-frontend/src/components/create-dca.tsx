@@ -1,4 +1,7 @@
 import React, { useState, useEffect, FormEvent } from 'react';
+import { ArrowDownToLine } from 'lucide-react';
+
+import { useJwtContext } from '@lit-protocol/vincent-app-sdk/react';
 
 import { useBackend } from '@/hooks/useBackend';
 import { useTokens } from '@/hooks/useTokens';
@@ -7,6 +10,7 @@ import { Separator } from '@/components/ui/separator';
 import { DEFAULT_VALUE, InputAmount } from '@/components/input-amount';
 import { FREQUENCIES, SelectFrequency } from '@/components/select-frequency';
 import { TokenBalanceSelect } from '@/components/token-balance-select';
+import { WalletModal } from '@/components/wallet-modal';
 
 export interface CreateDCAProps {
   onCreate?: () => void;
@@ -19,8 +23,10 @@ export const CreateDCA: React.FC<CreateDCAProps> = ({ onCreate }) => {
   const [frequency, setFrequency] = useState<string>(FREQUENCIES[0].value);
   const [tokenInAddress, setTokenInAddress] = useState<string>('');
   const [tokenOutAddress, setTokenOutAddress] = useState<string>('');
+  const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const { createDCA } = useBackend();
   const { tokens, loading: tokensLoading } = useTokens();
+  const { authInfo } = useJwtContext();
 
   useEffect(() => {
     if (tokens.length > 0) {
@@ -160,6 +166,17 @@ export const CreateDCA: React.FC<CreateDCAProps> = ({ onCreate }) => {
             <strong style={{ fontFamily: 'Poppins, system-ui, sans-serif' }}>Note:</strong> Ensure
             your wallet holds sufficient Base ETH for the app to function smoothly.
           </div>
+
+          <Button
+            type="button"
+            size="lg"
+            variant="primary"
+            className="w-full py-6 text-lg font-semibold"
+            onClick={() => setIsModalOpen(true)}
+          >
+            <ArrowDownToLine className="flex-shrink-0 h-6 w-6" />{' '}
+            <span className="truncate">Deposit Tokens</span>
+          </Button>
         </div>
 
         <Separator className="my-8" />
@@ -219,6 +236,12 @@ export const CreateDCA: React.FC<CreateDCAProps> = ({ onCreate }) => {
           </div>
         </div>
       </form>
+
+      <WalletModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        walletAddress={authInfo?.pkp.ethAddress}
+      />
     </div>
   );
 };

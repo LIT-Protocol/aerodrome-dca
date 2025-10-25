@@ -121,8 +121,8 @@ export const CreateDCA: React.FC<CreateDCAProps> = ({ onCreate }) => {
                 color: 'var(--footer-text-color, #121212)',
               }}
             >
-              This DCA agent automatically purchases your chosen token with a specific amount on
-              your predefined schedule using Aerodrome DEX.
+              This DCA agent automatically purchases your chosen token on a predefined schedule
+              using Aerodrome DEX.
             </p>
             <p
               className="text-sm leading-relaxed"
@@ -131,19 +131,8 @@ export const CreateDCA: React.FC<CreateDCAProps> = ({ onCreate }) => {
                 color: 'var(--footer-text-color, #121212)',
               }}
             >
-              Typically, building automated crypto spending agents involves trusting agent
-              developers or wallet SaaS companies for <strong>key management</strong>. Vincent
-              enables a more secure and simpler process.
-            </p>
-            <p
-              className="text-sm leading-relaxed"
-              style={{
-                fontFamily: '"Encode Sans Semi Expanded", system-ui, sans-serif',
-                color: 'var(--footer-text-color, #121212)',
-              }}
-            >
-              The agent operates using permissions securely delegated by you, following strict rules
-              you establish during setup—such as authorized abilities. These onchain rules are
+              Unlike traditional solutions that require trusting third parties with key management,
+              Vincent uses secure delegated permissions with strict onchain rules. These rules are
               cryptographically enforced by{' '}
               <a
                 href="https://litprotocol.com/"
@@ -154,8 +143,16 @@ export const CreateDCA: React.FC<CreateDCAProps> = ({ onCreate }) => {
               >
                 Lit Protocol
               </a>
-              , ensuring every action stays within your guardrails. With Vincent, you achieve
-              powerful automation combined with secure, permissioned execution.
+              , ensuring every action stays within your predefined guardrails.
+            </p>
+            <p
+              className="text-sm leading-relaxed"
+              style={{
+                fontFamily: '"Encode Sans Semi Expanded", system-ui, sans-serif',
+                color: 'var(--footer-text-color, #121212)',
+              }}
+            >
+              You get powerful automation combined with secure, permissioned execution.
             </p>
           </div>
 

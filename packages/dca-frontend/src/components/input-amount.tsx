@@ -3,8 +3,6 @@ import React from 'react';
 
 import { Label } from '@/components/ui/label';
 
-export const DEFAULT_VALUE = '1.00';
-
 export interface FrequencySelectProps {
   disabled?: boolean;
   onChange?: (value: string) => void;
@@ -28,7 +26,7 @@ export const InputAmount: React.FC<FrequencySelectProps> = ({
           color: 'var(--footer-text-color, #121212)',
         }}
       >
-        DCA Amount
+        DCA Amount (in USD)
       </Label>
       <div className="flex flex-row items-center gap-2">
         <Input
@@ -36,9 +34,7 @@ export const InputAmount: React.FC<FrequencySelectProps> = ({
           required={required}
           className="h-10"
           type="number"
-          step="0.01"
-          min="0"
-          placeholder="1.00"
+          step="1"
           value={value}
           onChange={(e) => onChange?.(e.target.value)}
           disabled={disabled}
@@ -52,9 +48,7 @@ export const InputAmount: React.FC<FrequencySelectProps> = ({
             fontFamily: 'Poppins, system-ui, sans-serif',
             color: 'var(--footer-text-color, #121212)',
           }}
-        >
-          USD
-        </span>
+        ></span>
       </div>
     </div>
   );

@@ -15,6 +15,7 @@ import {
   handleDeleteScheduleRoute,
   handleEditScheduleRoute,
 } from './schedules';
+import { handleListTokensRoute } from './tokens';
 import { userKey, VincentAuthenticatedRequest } from './types';
 import { env } from '../env';
 import { serviceLogger } from '../logger';
@@ -57,6 +58,7 @@ export const registerRoutes = (app: Express) => {
   }
   app.use(cors(corsConfig));
 
+  app.get('/tokens', handleListTokensRoute);
   app.get('/purchases', middleware, setSentryUserMiddleware, handler(handleListPurchasesRoute));
   app.get('/schedules', middleware, setSentryUserMiddleware, handler(handleListSchedulesRoute));
   app.post('/schedule', middleware, setSentryUserMiddleware, handler(handleCreateScheduleRoute));

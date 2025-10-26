@@ -27,6 +27,16 @@ export type DCA = {
       tokenId: string;
     };
     updatedAt: string;
+    tokenIn: {
+      address: `0x${string}`;
+      symbol: string;
+      decimals: number;
+    };
+    tokenOut: {
+      address: `0x${string}`;
+      symbol: string;
+      decimals: number;
+    };
   };
 };
 
@@ -34,6 +44,16 @@ export interface CreateDCARequest {
   name: string;
   purchaseAmount: string;
   purchaseIntervalHuman: string;
+  tokenIn: {
+    address: `0x${string}`;
+    symbol: string;
+    decimals: number;
+  };
+  tokenOut: {
+    address: `0x${string}`;
+    symbol: string;
+    decimals: number;
+  };
 }
 
 export const useBackend = () => {
@@ -121,6 +141,18 @@ export const useBackend = () => {
     [sendRequest]
   );
 
+  const getTokens = useCallback(async () => {
+    return sendRequest<
+      Array<{
+        address: `0x${string}`;
+        symbol: string;
+        name?: string;
+        decimals: number;
+        listed: boolean;
+      }>
+    >('/tokens', 'GET');
+  }, [sendRequest]);
+
   return {
     createDCA,
     deleteDCA,
@@ -129,5 +161,6 @@ export const useBackend = () => {
     enableDCA,
     getDCAs,
     getJwt,
+    getTokens,
   };
 };

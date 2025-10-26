@@ -8,8 +8,10 @@ import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Spinner } from '@/components/ui/spinner';
 import { WalletModal } from '@/components/wallet-modal';
+import { TokenBalanceSelect } from '@/components/token-balance-select';
 import { env } from '@/config/env';
 import { useChain } from '@/hooks/useChain';
+import { useTokens } from '@/hooks/useTokens';
 
 const { VITE_APP_ID } = env;
 
@@ -19,15 +21,21 @@ const formatAddress = (address: string | undefined) => {
 };
 
 export const Wallet: React.FC = () => {
-  const { chain, provider, usdcContract, wbtcContract } = useChain();
+  const { chain, provider } = useChain();
+  const { tokens, loading: tokensLoading } = useTokens();
   const [ethBalance, setEthBalance] = useState<string>('0');
-  const [usdcBalance, setUsdcBalance] = useState<string>('0');
-  const [wbtcBalance, setWbtcBalance] = useState<string>('0');
   const [isLoadingBalance, setIsLoadingBalance] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState<boolean>(false);
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const { authInfo, logOut } = useJwtContext();
+
+  // Track user's selected token address (separate from default)
+  const [userSelectedToken, setUserSelectedToken] = useState<string | null>(null);
+
+  // Derive the selected token: user selection takes precedence, otherwise default to WETH
+  const selectedTokenAddress =
+    userSelectedToken || tokens.find((t) => t.symbol === 'WETH')?.address || '';
 
   // Function to fetch PKP balances
   const fetchPkpBalance = useCallback(async () => {
@@ -37,15 +45,8 @@ export const Wallet: React.FC = () => {
       setIsLoadingBalance(true);
       setError(null);
 
-      const [ethBalanceWei, usdcBalance, wbtcBalanceWei] = await Promise.all([
-        provider.getBalance(authInfo?.pkp.ethAddress),
-        usdcContract.balanceOf(authInfo?.pkp.ethAddress),
-        wbtcContract.balanceOf(authInfo?.pkp.ethAddress),
-      ]);
-
+      const ethBalanceWei = await provider.getBalance(authInfo.pkp.ethAddress);
       setEthBalance(ethers.utils.formatUnits(ethBalanceWei, 18));
-      setUsdcBalance(ethers.utils.formatUnits(usdcBalance, 6));
-      setWbtcBalance(ethers.utils.formatUnits(wbtcBalanceWei, 8));
 
       setIsLoadingBalance(false);
     } catch (err: unknown) {
@@ -53,7 +54,7 @@ export const Wallet: React.FC = () => {
       setError(`Failed to fetch wallet balance`);
       setIsLoadingBalance(false);
     }
-  }, [authInfo, provider, usdcContract, wbtcContract]);
+  }, [authInfo, provider]);
 
   useEffect(() => {
     queueMicrotask(() => fetchPkpBalance());
@@ -174,53 +175,15 @@ export const Wallet: React.FC = () => {
           </span>
         </div>
 
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <img src="/external-logos/usdc-coin-logo.svg" alt="USDC" className="w-4 h-4" />
-            <span
-              className="text-sm font-medium"
-              style={{
-                fontFamily: 'Poppins, system-ui, sans-serif',
-                color: 'var(--footer-text-color, #121212)',
-              }}
-            >
-              USDC Balance
-            </span>
-          </div>
-          <span
-            className="text-sm font-medium"
-            style={{
-              fontFamily: '"Encode Sans Semi Expanded", system-ui, sans-serif',
-              color: 'var(--footer-text-color, #121212)',
-            }}
-          >
-            {isLoadingBalance ? 'Loading...' : `${parseFloat(usdcBalance).toFixed(2)} USDC`}
-          </span>
-        </div>
-
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <img src="/external-logos/wbtc.svg" alt="WBTC" className="w-4 h-4" />
-            <span
-              className="text-sm font-medium"
-              style={{
-                fontFamily: 'Poppins, system-ui, sans-serif',
-                color: 'var(--footer-text-color, #121212)',
-              }}
-            >
-              wBTC Balance
-            </span>
-          </div>
-          <span
-            className="text-sm font-medium"
-            style={{
-              fontFamily: '"Encode Sans Semi Expanded", system-ui, sans-serif',
-              color: 'var(--footer-text-color, #121212)',
-            }}
-          >
-            {isLoadingBalance ? 'Loading...' : `${parseFloat(wbtcBalance).toFixed(6)} WBTC`}
-          </span>
-        </div>
+        <TokenBalanceSelect
+          label="Token Balance"
+          value={selectedTokenAddress}
+          onChange={setUserSelectedToken}
+          tokens={tokens}
+          disabled={tokensLoading}
+          hideEth={true}
+          tokensLoading={tokensLoading}
+        />
       </div>
 
       {error && (

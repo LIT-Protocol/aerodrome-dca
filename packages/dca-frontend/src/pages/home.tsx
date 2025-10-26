@@ -20,7 +20,7 @@ export const Home: React.FC = () => {
       <div className="w-full max-w-4xl mx-auto">
         <div className="bg-white border border-gray-200 rounded-2xl p-4 sm:p-6 shadow-sm w-full">
           <PageHeader
-            title="Vincent wBTC DCA Agent"
+            title="Vincent Aerodrome DCA Agent"
             subtitle="Automated Dollar-Cost Averaging"
             description={
               <>

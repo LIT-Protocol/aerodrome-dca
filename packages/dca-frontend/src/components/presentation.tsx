@@ -18,7 +18,7 @@ export const Presentation: React.FC = () => {
   return (
     <div className="w-full max-w-2xl">
       <Card
-        data-testId="presentation"
+        data-testid="presentation"
         className="w-full bg-white border border-gray-200 rounded-2xl p-6 sm:p-8 shadow-sm"
       >
         <CardHeader className="text-center space-y-2">
@@ -30,7 +30,7 @@ export const Presentation: React.FC = () => {
               color: 'var(--footer-text-color, #121212)',
             }}
           >
-            Vincent wBTC DCA Agent
+            Vincent Aerodrome DCA Agent
           </CardTitle>
           <CardDescription
             className="uppercase tracking-widest"
@@ -59,18 +59,7 @@ export const Presentation: React.FC = () => {
           </p>
 
           <p
-            className="text-sm text-center"
-            style={{
-              fontFamily: '"Encode Sans Semi Expanded", system-ui, sans-serif',
-              color: 'var(--footer-text-color, #121212)',
-            }}
-          >
-            This application allows you to set up automated dollar-cost-averaging for your wBTC
-            investments on Base. Support for more chains coming soon.
-          </p>
-
-          <p
-            className="text-sm text-center"
+            className="text-base text-center"
             style={{
               fontFamily: '"Encode Sans Semi Expanded", system-ui, sans-serif',
               color: 'var(--footer-text-color, #121212)',
